@@ -54,7 +54,7 @@ export async function solution ( filename : string, partNumber: number) {
 export async function solutionPartTwo ( filename : string, partNumber: number) {
     let fileLines : String[] = await parseFileIntoArrayOfLines(filename)
     let grid: Grid = new Grid(fileLines)
-    let pointsVisited: Map<Point, Array<string>> = new Map()
+    let pointsVisited: Map<string, Array<string>> = new Map()
     let obstacleLocations = new Map()
     let direction = 'U'
 
@@ -96,134 +96,142 @@ export async function solutionPartTwo ( filename : string, partNumber: number) {
 
         let obstacleAtNextPointResultsInLoop: boolean = await findLoopOrExit(currentPoint, nextPoint, direction, pointsVisited, fileLines)
         if (obstacleAtNextPointResultsInLoop && !(startingPoint.row === nextPoint.row && startingPoint.column === nextPoint.column)) {
-            obstacleLocations.set('(' + nextPoint.row.toString() + ', ' + nextPoint.column.toString() + ")", 1)
+            obstacleLocations.set(convertPointToString(nextPoint), 1)
         }
         currentPoint = nextPoint
-        // let key = currentPoint.row.toString() + ', ' + currentPoint.column.toString()
-        let directionsTraveled = pointsVisited.get(currentPoint) || []
+        let key = convertPointToString(currentPoint)
+        let directionsTraveled = pointsVisited.get(key) || []
         directionsTraveled.push(direction)
-        pointsVisited.set(currentPoint, directionsTraveled)
+        pointsVisited.set(key, directionsTraveled)
 
     }
     console.log('obstacle locations', obstacleLocations)
     return obstacleLocations.size
 }
 
+async function findAllPointsVisited ( filename : string, partNumber: number) {
+    let fileLines : String[] = await parseFileIntoArrayOfLines(filename)
+    let grid: Grid = new Grid(fileLines)
+    let pointsVisited = new Map()
+    let direction = 'U'
 
+    // Find where the guard starts
+    let currentPoint: Point = new Point(0, 0, '^')
+    for (let row = 0; row < grid.numberOfRows; row++) {
+        for (let column = 0; column < grid.numberOfColumns; column++) {
+            if (grid.gridPoints[row][column].value === '^') {
+                currentPoint = grid.gridPoints[row][column]
+                break
+            }
+        }
+    }
 
-
-// export async function findLoopOrExit ( startingPoint: Point, direction: string, pointsVisited: Map<Point, Array<string>>, grid: Grid) {
-//     console.log('in function')
-//     // Copy all values so originals aren't changed
-//     let currentPoint = new Point(startingPoint.row, startingPoint.column, '1')
-//     let visitedList: Map<Point, Array<string>> = new Map()
-//     for (const point of pointsVisited.entries()) {
-//         visitedList.set(point[0], point[1])
-//     }
-//     let funcDirection = `${direction}`
-
-//     let resultsInLoop = false
-//     while(1 === 1) {
-//         console.log('******************************')
-//         let nextPoint: Point
-//         try {
-//             nextPoint = await grid.getNextLocation(currentPoint.row, currentPoint.column, new Vector(1, funcDirection))
-//         } catch {
-//             break
-//         }
+    while(1 === 1) {
+        // console.log(`current point: (${currentPoint.row}, ${currentPoint.column}), path length: ${pointsVisited.size}`)
+        let nextPoint: Point
+        try {
+            nextPoint = await grid.getNextLocation(currentPoint.row, currentPoint.column, new Vector(1, direction))
+        } catch {
+            break
+        }
         
-//         // Check if the next point is still on the grid.
-//         if (await grid.canMoveToLocation(nextPoint.row, nextPoint.column)) {
+        // console.log(`next point: (${nextPoint.row}, ${nextPoint.column}), path length: ${pointsVisited.size}`)
+        // Check if the next point is still on the grid.
+        if (await grid.canMoveToLocation(nextPoint.row, nextPoint.column)) {
             
-//             // If the next point would be an obstacle, rotate 90 degrees right and move that direction.
-//             while (nextPoint.value === '#') {
-//                 funcDirection = await rotate90Degrees(funcDirection)
-//                 nextPoint = await grid.getNextLocation(currentPoint.row, currentPoint.column, new Vector(1, funcDirection))
-//             }
-//             currentPoint = nextPoint
-//             console.log('visitedList', visitedList)
-//             let directionsTraveled: Array<string> = visitedList.get(nextPoint) || []
-//             // If the nextPoint has been visited going the same direction, we are in a loop.
-//             if (directionsTraveled.includes(funcDirection)) {
-//                 console.log('loop detected', funcDirection, directionsTraveled)
-//                 resultsInLoop = true
-//                 break
-//             }
-//             directionsTraveled.push(funcDirection)
-//             visitedList.set(currentPoint, directionsTraveled)
-//         } else {
-//             break
-//         }
-//     }
-//     return resultsInLoop
+            // If the next point would be an obstacle, rotate 90 degrees right and move that direction.
+            while (nextPoint.value === '#') {
+                direction = await rotate90Degrees(direction)
+                nextPoint = await grid.getNextLocation(currentPoint.row, currentPoint.column, new Vector(1, direction))
+            }
+            currentPoint = nextPoint
+            pointsVisited.set(currentPoint, 1)
+        } else {
+            break
+        }
+    }
+    return pointsVisited
+}
+
+async function doesLoopExistUsingPartOne ( filename : string, obstacleLocation: Point) {
+    let fileLines : String[] = await parseFileIntoArrayOfLines(filename)
+    let grid: Grid = new Grid(fileLines)
     
-// }
+    let pointsVisited = new Map()
+    let direction = 'U'
 
-// export async function solutionPartTwo ( filename : string, partNumber: number) {
-//     let fileLines : String[] = await parseFileIntoArrayOfLines(filename)
-//     let grid: Grid = new Grid(fileLines)
-//     let pointsVisited: Map<Point, Array<string>> = new Map()
-//     let obstacleLocations = new Map()
-//     let direction = 'U'
+    // Find where the guard starts
+    let currentPoint: Point = new Point(0, 0, '^')
+    for (let row = 0; row < grid.numberOfRows; row++) {
+        for (let column = 0; column < grid.numberOfColumns; column++) {
+            if (grid.gridPoints[row][column].value === '^') {
+                currentPoint = grid.gridPoints[row][column]
+                break
+            }
+        }
+    }
 
-//     // Find where the guard starts
-//     let currentPoint: Point = new Point(0, 0, '^')
-//     for (let row = 0; row < grid.numberOfRows; row++) {
-//         for (let column = 0; column < grid.numberOfColumns; column++) {
-//             if (grid.gridPoints[row][column].value === '^') {
-//                 currentPoint = grid.gridPoints[row][column]
-//                 break
-//             }
-//         }
-//     }
-//     let startingPoint = currentPoint
+    // Need to make sure we're not placing an obstacle at the starting position
+    if (obstacleLocation.row === currentPoint.row && obstacleLocation.column === currentPoint.column) {
+        return false
+    }
+    grid.gridPoints[obstacleLocation.row][obstacleLocation.column].value = '#'
 
-//     while(1 === 1) {
-//         // Take a step in the current direction.
-//         // Once at new location, see if adding an obstacle ahead would result in a loop
+    while(1 === 1) {
+        // console.log(`current point: (${currentPoint.row}, ${currentPoint.column}), path length: ${pointsVisited.size}`)
+        let nextPoint: Point
+        try {
+            nextPoint = await grid.getNextLocation(currentPoint.row, currentPoint.column, new Vector(1, direction))
+        } catch {
+            break
+        }
         
-//         if (LOGGING) console.log(`current point: (${currentPoint.row}, ${currentPoint.column}), path length: ${pointsVisited.size}`)
-//         let nextPoint: Point
-//         try {
-//             nextPoint = await grid.getNextLocation(currentPoint.row, currentPoint.column, new Vector(1, direction))
-//         } catch {
-//             // If getNextLocation throws an error, we've reached the end of the grid.
-//             break
-//         }
-        
-//         // console.log(`next point: (${nextPoint.row}, ${nextPoint.column}), path length: ${pointsVisited.size}`)
-//         // Check if the next point is still on the grid.
+        // console.log(`next point: (${nextPoint.row}, ${nextPoint.column}), path length: ${pointsVisited.size}`)
+        // Check if the next point is still on the grid.
+        if (await grid.canMoveToLocation(nextPoint.row, nextPoint.column)) {
+            
+            // If the next point would be an obstacle, rotate 90 degrees right and move that direction.
+            while (nextPoint.value === '#') {
+                direction = await rotate90Degrees(direction)
+                nextPoint = await grid.getNextLocation(currentPoint.row, currentPoint.column, new Vector(1, direction))
+            }
+            currentPoint = nextPoint
+            let directionsTraveled = pointsVisited.get(nextPoint) || []
+            if (directionsTraveled.includes(direction)) {
+                return true
+            }
+            directionsTraveled.push(direction)
+            pointsVisited.set(currentPoint, directionsTraveled)
+        } else {
+            break
+        }
+    }
+    return false
+}
 
-//         // If the next point would be an obstacle, rotate 90 degrees right and move that direction.
-//         while (nextPoint.value === '#') {
-//             direction = await rotate90Degrees(direction)
-//             nextPoint = await grid.getNextLocation(currentPoint.row, currentPoint.column, new Vector(1, direction))
-//         }
-//         // See if adding an obstacle at the next point would result in a loop.
-//         // console.log('***************************')
-//         // console.log('pointsVisited before', pointsVisited)
-//         let obstacleAtNextPointResultsInLoop: boolean = await findLoopOrExit(currentPoint, nextPoint, direction, pointsVisited, fileLines)
-//         // console.log('pointsVisited after', pointsVisited)
-//         if (obstacleAtNextPointResultsInLoop && !(startingPoint.row === nextPoint.row && startingPoint.column === nextPoint.column)) {
-//             obstacleLocations.set('(' + nextPoint.row.toString() + ', ' + nextPoint.column.toString() + ")", 1)
-//         }
-//         currentPoint = nextPoint
-//         let directionsTraveled = pointsVisited.get(currentPoint) || []
-//         directionsTraveled.push(direction)
-//         pointsVisited.set(currentPoint, directionsTraveled)
+export async function partTwoSolutionTakeThree ( filename : string) {
+    let placesToTryObstacles = await findAllPointsVisited(filename, 2)
+    let obstacleLocations: Map<Point, number> = new Map()
+    let counter: number = 0
+    for (const key of placesToTryObstacles) {
+        let loopExists: boolean = await doesLoopExistUsingPartOne(filename, key[0])
+        if (loopExists) obstacleLocations.set(key[0], 1)
+        counter++
+    }
+    return obstacleLocations.size
+}
 
-//     }
-//     console.log('obstacle locations', obstacleLocations)
-//     return obstacleLocations.size
-// }
+function convertPointToString (point: Point) {
+    return '(' + point.row.toString() + ', ' + point.column.toString() + ')'
+}
 
-export async function findLoopOrExit ( startingPoint: Point, pointToChangeToObstacle: Point, direction: string, pointsVisited: Map<Point, Array<string>>, fileLines: Array<String>) {
+export async function findLoopOrExit ( startingPoint: Point, pointToChangeToObstacle: Point, direction: string, pointsVisited: Map<string, Array<string>>, fileLines: Array<String>) {
     if (LOGGING) console.log('in function')
     let resultsInLoop = false
 
     // Copy all values so originals aren't changed
     let currentPoint = new Point(startingPoint.row, startingPoint.column, '1')
-    let visitedList: Map<Point, Array<string>> = new Map(pointsVisited)
+    let visitedList: Map<string, Array<string>> = new Map()
     let funcDirection = `${direction}`
     let modifiedGrid: Grid = new Grid(fileLines)
     modifiedGrid.gridPoints[pointToChangeToObstacle.row][pointToChangeToObstacle.column].value = '#'
@@ -259,15 +267,18 @@ export async function findLoopOrExit ( startingPoint: Point, pointToChangeToObst
             if (LOGGING) console.log(`final next point: (${nextPoint.row}, ${nextPoint.column}), value: ${nextPoint.value}, direction: ${funcDirection}, path length: ${visitedList.size}`)
             currentPoint = nextPoint
             // console.log('visitedList', visitedList)
-            let directionsTraveled: Array<string> = visitedList.get(nextPoint) || []
+            let key = convertPointToString(nextPoint)
+            let directionsTraveled: Array<string> = visitedList.get(key) || []
+            
             // If the nextPoint has been visited going the same direction, we are in a loop.
             if (directionsTraveled.includes(funcDirection)) {
                 if (LOGGING) console.log('loop detected', funcDirection, directionsTraveled)
+                console.log('visitedList', visitedList)
                 resultsInLoop = true
                 break
             }
             directionsTraveled.push(funcDirection)
-            visitedList.set(nextPoint, directionsTraveled)
+            visitedList.set(key, directionsTraveled)
         // } else {
         //     break
         // }
@@ -293,24 +304,15 @@ async function rotate90Degrees (direction: string) {
 // solution(dataFolder + '/tests/input.txt', 1)
 // solution(dataFolder + '/input.txt', 1)
 
+// These weren't working
 // solutionPartTwo(dataFolder + '/tests/input.txt', 2)
-solutionPartTwo(dataFolder + '/input.txt', 2)
+// solutionPartTwo(dataFolder + '/input.txt', 2)
+
+// partTwoSolutionTakeThree(dataFolder + '/tests/input.txt')
+partTwoSolutionTakeThree(dataFolder + '/input.txt')
     .then(answer => console.log('answer:', answer))
 
-// 2069 is too high
-// 2068 is too high
-// 2066 is too high
-// Not 2026
-
-
-//   '(6, 3)' => 1,
-//   '(7, 6)' => 1,
-//   '(8, 3)' => 1,
-//   '(8, 1)' => 1,
-//   '(7, 7)' => 1,
-//   '(9, 7)' => 1
-
-
+// Obstacles to place based on example:
 // 6, 3
 // 7, 6
 // 7, 7
