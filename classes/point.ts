@@ -58,6 +58,10 @@ export class Point {
     public async addNewIncomingVector(newVectorToAdd : {vector: Vector, lowestCost: number}) {
         this.incomingVectors.push(newVectorToAdd)
     }
+    
+    public getCoordinatesAsString () {
+        return '(' + this.row.toString() + ', ' + this.column.toString() + ')'
+    }
 
     public async getLowestIncomingValueForIncomingVector(incomingVector: Vector) {
         // 12232 with old function, 7141 with new
