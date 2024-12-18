@@ -29,12 +29,12 @@ export async function solution ( filename : string) {
         box = blessed.box({
             top: 'center',
             left: 'center',
-            width: '905',
+            width: 'shrink',
             height: '95%',
             content: '',
             tags: true,
             border: {
-            type: 'line'
+                type: 'line'
             },
             style: {
                 fg: 'white',
